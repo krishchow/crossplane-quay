@@ -1,12 +1,23 @@
 #!/bin/bash
 source variables.env
 
-oc crossplane install provider crossplane/provider-helm:master
-oc crossplane install provider crossplane/provider-aws:master
-oc crossplane install provider crossplane/provider-in-cluster:master 
+kubectl apply -f ./manifests/controllerconfig.yaml
 
 ./scripts/awscreds.sh
 
-sleep 10
+until kubectl get customresourcedefinition.apiextensions.k8s.io/providerconfigs.aws.crossplane.io > /dev/null 2>&1 
+do
+  sleep 2
+done
 
-oc apply -f ./manifests/providers.yaml
+until kubectl get customresourcedefinition.apiextensions.k8s.io/providerconfigs.helm.crossplane.io > /dev/null 2>&1 
+do
+  sleep 2
+done
+
+until kubectl get customresourcedefinition.apiextensions.k8s.io/providerconfigs.in-cluster.crossplane.io > /dev/null 2>&1 
+do
+  sleep 2
+done
+
+kubectl apply -f ./manifests/providers.yaml
